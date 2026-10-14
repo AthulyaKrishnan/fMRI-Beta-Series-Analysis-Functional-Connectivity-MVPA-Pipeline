@@ -2,7 +2,7 @@
 
 # fMRI Beta-Series Analysis, Functional Connectivity & Machine Learning Pipeline
 
-This repository contains analysis pipelines developed for an ongoing task-based fMRI study conducted at the Indian Institute of Science (IISc), Bengaluru. The project combines traditional neuroimaging methods with machine learning to investigate how emotional and reward-related conditions are represented in brain activity.
+This repository contains analysis pipelines developed for an ongoing task-based fMRI study conducted at the Indian Institute of Science (IISc), Bengaluru. The project combines traditional neuroimaging methods with machine learning to investigate how emotional and reward-related conditions are represented in brain.
 
 The repository focuses on the analysis workflow rather than the dataset itself. As the study is currently unpublished, participant data and group-level results are not included. The code is provided to demonstrate the implementation of the preprocessing, feature extraction, functional connectivity, and machine learning pipelines.
 
