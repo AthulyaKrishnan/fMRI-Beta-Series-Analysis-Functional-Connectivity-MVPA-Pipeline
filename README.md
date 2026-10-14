@@ -1,184 +1,177 @@
-[Final_IEL_readme.docx](https://github.com/user-attachments/files/28539208/Final_IEL_readme.docx)
+# fMRI Beta-Series Analysis, Functional Connectivity & MVPA Pipeline
 
-# fMRI Beta-Series Analysis, Functional Connectivity & Machine Learning Pipeline
+**Tools:** AFNI · Python · pandas · NumPy · SciPy · scikit-learn · Nilearn · Matplotlib · Seaborn
 
-This repository contains analysis pipelines developed for an ongoing task-based fMRI study conducted at the Indian Institute of Science (IISc), Bengaluru. The project combines traditional neuroimaging methods with machine learning to investigate how emotional and reward-related conditions are represented in brain.
+## Overview
 
-The repository focuses on the analysis workflow rather than the dataset itself. As the study is currently unpublished, participant data and group-level results are not included. The code is provided to demonstrate the implementation of the preprocessing, feature extraction, functional connectivity, and machine learning pipelines.
+This repository contains the analysis pipeline developed for an ongoing fMRI study conducted at the Indian Institute of Science (IISc), Bengaluru, involving 37 healthy participants. The data are preprocessed and organized in a BIDS-compatible structure to support reproducible neuroimaging analyses.
 
----
+As the study is currently unpublished, the full dataset and group-level results cannot be publicly shared. To promote transparency and reproducibility, this repository focuses on the analytical framework and implementation. All figures included here are generated from a single representative participant and demonstrate pipeline outputs rather than study findings.
 
-## Features
+The pipeline integrates traditional neuroimaging methods with machine-learning approaches:
 
-The repository includes workflows for:
-
-- Trial-wise event extraction from behavioural log files
-- Single-trial beta estimation using AFNI Least Squares Sum (LSS)
+- Task-event extraction from `.mat` files
+- Single-trial voxel-wise beta estimation using AFNI LSS
 - ROI-based voxel-wise beta extraction
-- Functional connectivity analysis
-- Multivariate Pattern Analysis (MVPA)
-- Machine learning classification using classical models and neural networks
-- Cross-validation and model evaluation
+- Quality control and exploratory visualization
+- Beta-series functional connectivity
+  - ROI-to-ROI connectivity
+  - Seed-to-voxel connectivity
+- Multivariate pattern analysis (MVPA)
+  - Linear SVM decoding
+  - Nested cross-validation
+  - Permutation-based significance testing
 
----
+## 1. Task Events Time-Series Extraction & Dataset Construction
 
-## Analysis Pipeline
+### Key features
 
-### 1. Behavioural Data Processing
+- Automated loading of participant-specific MATLAB log files
+- Run-level data extraction and aggregation
+- Conversion of numerical task codes into interpretable condition labels:
+  - Emotion: Positive / Neutral
+  - Loss: Loss / No Loss
+- Extraction of behavioral measures:
+  - Reaction time (RT)
+  - Accuracy
+  - Cue onset
+  - Task onset
+  - Inter-stimulus interval (ISI)
+  - Inter-trial interval (ITI)
+- Removal of incorrect trials
+- Condition-specific RT outlier detection and filtering
+- Chronological trial ordering across runs
+- Generation of standardized participant-level master files
 
-Behavioural event files are extracted from MATLAB log files and converted into participant-level datasets.
+### Outputs
 
-The pipeline includes:
+- A trial-wise behavioral dataset containing experimental conditions, behavioral performance, timing information, and metadata required for downstream fMRI modeling and machine-learning analyses.
+- A master dataset linking behavioral measures, single-trial beta estimates, functional connectivity analyses, and MVPA decoding.
 
-- Run-wise event extraction
-- Condition labelling
-- Behavioural measures (reaction time and accuracy)
-- Trial filtering
-- Outlier removal
-- Metadata generation
+### Representative outputs
 
-Output:
+![Task events output 1](readme_assets/01_task_events_1.png)
+![Task events output 2](readme_assets/01_task_events_2.png)
 
-- Trial-wise behavioural dataset used throughout the analysis pipeline.
+## 2. AFNI LSS Deconvolution Pipeline
 
----
+Implements **Least Squares–Separate (LSS)** single-trial modeling using AFNI.
 
-### 2. Single-Trial Beta Estimation
+### Key features
 
-Whole-brain single-trial beta maps are estimated using AFNI's Least Squares Sum (LSS) framework.
+- Condition-wise GLM estimation via `3dDeconvolve`
+- Motion and censor regressors
+- Trial-specific beta estimation via `3dLSS`
+- Extraction of trial-wise beta sub-bricks
+- Output organized by condition and subject
 
-The shell scripts perform:
+### Output
 
-- GLM estimation
-- Motion regression
-- Censoring
-- Trial-specific beta estimation
-- Export of trial-wise beta images
+Whole-brain, single-trial voxel-wise beta estimates saved as NIfTI files for each condition.
 
-Output:
+## 3. Beta Extraction Pipeline (ROI Level)
 
-- One beta image for every trial.
+Extracts voxel-wise beta estimates from predefined ROIs for each trial.
 
----
+### Key features
 
-### 3. ROI Beta Extraction
+- ROI resampling to subject-specific functional space
+- Trial-wise beta extraction using Nilearn masking
+- Quality-control checks for missing or invalid beta files
+- Condition labeling for the Emotion × Loss interaction
+- Generation of:
+  - Metadata containing subject and trial details
+  - ROI voxel-beta matrices, with voxel beta values stored in separate columns
+  - Exploratory plots of beta distributions across trials, per ROI and condition, and trial-by-voxel beta matrices
 
-Voxel-wise beta values are extracted from predefined Regions of Interest (ROIs) using Nilearn masking.
+### Output
 
-The pipeline performs:
+A metadata file containing experimental-condition details, beta-file paths, and voxel-wise beta values for each trial.
 
-- ROI masking
-- Resampling to functional space
-- Voxel-wise beta extraction
-- Quality-control checks
-- Metadata generation
+### Representative outputs
 
-Output:
+![ROI beta extraction output 1](readme_assets/03_roi_beta_extraction_1.png)
+![ROI beta extraction output 2](readme_assets/03_roi_beta_extraction_2.png)
 
-- Trial-wise voxel feature matrices for each ROI.
+## 4. Beta-Series Functional Connectivity Pipeline
 
----
+Computes trial-wise neural similarity across ROIs and whole-brain voxels.
 
-### 4. Functional Connectivity Analysis
-
-Functional connectivity is estimated using trial-wise beta-series correlations.
-
-The pipeline computes:
+### Key features
 
 - ROI-to-ROI correlation matrices
-- Seed-to-voxel connectivity maps
-- Fisher Z-transformed connectivity maps
+- Condition-specific connectivity analysis
+- Seed-based whole-brain connectivity mapping
+- Fisher Z-transform for correlation normalization
 
-These connectivity features are subsequently used for machine learning classification.
+### Outputs
 
----
+- ROI mean voxel-beta scores per trial
+- ROI × ROI correlation matrices
+- Seed-to-voxel connectivity maps (Z-scored)
+- Condition-wise functional-connectivity visualizations
+- One-sample t-test against zero
+- Group-level connectivity map
 
-### 5. Machine Learning
+### Representative outputs
 
-The repository contains two decoding approaches.
+![Functional connectivity output 1](readme_assets/04_functional_connectivity_1.png)
+![Functional connectivity output 2](readme_assets/04_functional_connectivity_2.png)
+![Functional connectivity output 3](readme_assets/04_functional_connectivity_3.png)
 
-#### ROI Beta-Series Decoding
+## 5. Multivariate Pattern Analysis (MVPA)
 
-Voxel-wise beta estimates are used as input features for binary classification.
+Decodes cognitive states from ROI beta patterns using support vector machine (SVM) classifiers.
 
-Implemented models include:
+### Key features
 
-- Logistic Regression
-- Linear Support Vector Classifier (Linear SVC)
-- Feed-forward Neural Network
+- Linear SVM classification using scikit-learn
+- Leave-One-Group-Out cross-validation for trial-level generalization
+- Nested cross-validation for hyperparameter tuning over a grid of `C` values
+- Standardization within folds to avoid data leakage
+- Confusion matrices for interpretability
 
-Evaluation is performed using Leave-One-Trial-Out (LOTO) cross-validation.
+### Statistical inference
 
-Performance metrics include:
+- Permutation testing with 10,000 iterations
+- Empirical p-value estimation
 
-- Accuracy
-- Confusion Matrix
+### Outputs
 
----
+- Fold-level quality-control checks
+- Fold-wise accuracy reports
+- Permutation distributions
+- Confusion matrices
+- Subject-level decoding summaries
+- Group accuracy across subjects
 
-#### Functional Connectivity Classification
+### Representative outputs
 
-ROI-to-ROI functional connectivity coefficients are extracted from correlation matrices and used as features for multi-class classification.
+![MVPA output 1](readme_assets/05_mvpa_1.png)
+![MVPA output 2](readme_assets/05_mvpa_2.png)
 
-A simple feed-forward neural network is trained to classify four experimental conditions using Leave-One-Subject-Out cross-validation.
+## Why This Project Matters
 
----
+This project demonstrates a trial-level fMRI analysis workflow, from single-trial beta estimation to connectivity modeling and machine-learning-based decoding. Rather than relying only on conventional univariate analyses, the pipeline uses voxel-wise representations to investigate how experimental conditions are encoded in distributed neural activity patterns.
 
-## Repository Structure
+Key methodological components include:
 
-```text
-├── Behavioural Processing
-├── AFNI LSS Beta Estimation
-├── ROI Beta Extraction
-├── Functional Connectivity
-├── MVPA
-└── Machine Learning
-```
+- **Single-trial beta estimation (LSS):** captures trial-specific neural responses
+- **Voxel-wise ROI feature extraction:** constructs machine-learning-ready neural representations
+- **Beta-series functional connectivity:** quantifies condition-dependent connectivity between brain regions and large-scale networks
+- **MVPA:** decodes cognitive and affective states from neural activity patterns
+- **Permutation-based inference:** assesses decoding performance relative to chance
+- **Reproducible neuroimaging workflows:** integrates AFNI, Nilearn, and scikit-learn
 
----
+Together, these analyses provide a framework for studying neural representations at the levels of activation, connectivity, and predictive modeling within a unified pipeline.
 
-## Python Packages
+## Future Extensions
 
-- AFNI
-- Python
-- NumPy
-- Pandas
-- SciPy
-- Nilearn
-- Scikit-learn
-- TensorFlow / Keras
-- Matplotlib
-- Seaborn
+- Representational similarity analysis (RSA)
+- Deep learning on voxel patterns (CNN-based decoding)
+- Graph neural networks for connectivity modeling
+- Group-level mixed-effects modeling
 
----
+## Data Availability and Reproducibility
 
-## Methods
-
-This repository demonstrates several widely used neuroimaging and machine learning techniques, including:
-
-- Least Squares Sum (LSS) single-trial modelling
-- ROI-based feature extraction
-- Beta-series functional connectivity
-- Multivariate Pattern Analysis (MVPA)
-- Logistic Regression
-- Linear Support Vector Machines
-- Feed-forward Neural Networks
-- Leave-One-Subject-Out Cross-Validation
-- Permutation-based statistical inference
-
----
-
-## Notes
-
-This repository is intended to document the analytical framework used in the study. Participant data and group-level results are not publicly available because the work is currently under review. The code has been shared to improve transparency, reproducibility, and to demonstrate the implementation of the analysis pipelines.
-
----
-
-## Future Work
-
-Potential extensions include:
-
-- Representational Similarity Analysis (RSA)
-- Deep learning for voxel-wise decoding
-- Graph neural networks for functional connectivity
-- Group-level mixed-effects modelling
+The full dataset and group-level results are not publicly available because the study is unpublished. The figures in this README are from one representative participant and are intended only to illustrate pipeline outputs. They should not be interpreted as group-level findings.
